@@ -1,11 +1,51 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_feature_flags/firebase_options.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    initializeFirebase();
+    super.initState();
+  }
+
+  void initializeFirebase() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    if (!kDebugMode) {
+      await FirebaseRemoteConfig.instance.fetchAndActivate();
+    }
+
+    final remoteConfig = FirebaseRemoteConfig.instance;
+
+    // Set default values
+    await remoteConfig.setDefaults({
+      'new_feature_enabled': false, // Default is off
+    });
+
+    // Fetch and activate config
+    await remoteConfig.fetchAndActivate();
+
+    // Check if the feature is enabled
+    bool isNewFeatureEnabled = remoteConfig.getBool('new_feature_enabled');
+
+    print('Is the new feature enabled? $isNewFeatureEnabled');
+  }
 
   // This widget is the root of your application.
   @override
